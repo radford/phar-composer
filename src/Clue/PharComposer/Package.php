@@ -73,7 +73,7 @@ class Package
         return $bins;
     }
 
-    public function getBlacklist()
+    protected function getBlacklistFiles()
     {
         return array(
             $this->getAbsolutePath('composer.phar'),
@@ -81,17 +81,51 @@ class Package
         );
     }
 
+    protected function getBlacklistDirectories()
+    {
+        $ret = array($this->getPathVendor());
+
+        static $dirs = array(
+            'tests',
+            'src/tests',
+            'lib/tests',
+            'Tests',
+            'spec',
+            'docs',
+            'doc',
+            'example',
+            'examples'
+        );
+
+        foreach ($dirs as $dir) {
+            $ret[] = $this->getAbsolutePath($dir . '/');
+        }
+
+        return $ret;
+    }
+
     /**
      *
      * @return Closure
-     * @uses self::getBlacklist()
+     * @uses self::getBlacklistFiles()
+     * @uses self::getBlacklistDirectories()
      */
     public function getBlacklistFilter()
     {
-        $blacklist = $this->getBlacklist();
+        $files = $this->getBlacklistFiles();
+        $dirs = $this->getBlacklistDirectories();
 
-        return function (SplFileInfo $file) use ($blacklist) {
-            return in_array($file->getPathname(), $blacklist) ? false : null;
+        return function (SplFileInfo $file) use ($files, $dirs) {
+            $path = $file->getPathname();
+            if (in_array($path, $files)) {
+                return false;
+            }
+            foreach ($dirs as $dir) {
+                if (substr($path, 0, strlen($dir)) === $dir) {
+                    return false;
+                }
+            }
+            return true;
         };
     }
 
