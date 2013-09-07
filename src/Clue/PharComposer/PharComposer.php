@@ -10,6 +10,7 @@ use UnexpectedValueException;
 use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\Finder\SplFileInfo;
+use Herrera\Box\Compactor;
 
 class PharComposer
 {
@@ -156,6 +157,9 @@ class PharComposer
 
         $box = Box::create($target);
         $box->getPhar()->startBuffering();
+
+        $box->addCompactor(new Compactor\Php());
+        $box->addCompactor(new Compactor\Json());
 
         $this->log('  - Adding main package');
         $this->addPackage($this->getPackageRoot(), $box);
